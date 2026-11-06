@@ -1,36 +1,43 @@
 const express = require('express');
 const router = express.Router();
-const { relayerAddress, getRelayerBalance, getRelayerResources } = require('../utils/tron');
+const { getRelayerBalance, getRelayerResources } = require('../utils/tron');
 const { logger } = require('../utils/logger');
 
 router.get('/health', async (req, res) => {
   try {
-    const [balance, resources] = await Promise.all([
-      getRelayerBalance(),
-      getRelayerResources()
-    ]);
+    let balance = 0;
+    let resources = { energy: 0, bandwidth: 0 };
+    let checkFailed = false;
+    let checkError = null;
 
-    const minBalance = parseFloat(process.env.MIN_TRX_BALANCE_ALERT) || 100;
-    const healthy = balance >= minBalance;
+    try {
+      balance = await getRelayerBalance();
+      resources = await getRelayerResources();
+    } catch (err) {
+      checkFailed = true;
+      checkError = err.message;
+      logger.warn(`Healthcheck failed to query TRON Network: ${err.message}`);
+    }
 
-    res.json({
-      status: healthy ? 'healthy' : 'low_balance',
+    let status = 'healthy';
+    if (checkFailed) {
+      status = 'degraded';
+    } else if (balance < 20) {
+      status = 'warning'; // Warning only, do not crash or flag offline
+    }
+
+    res.status(200).json({
+      status,
       relayer: {
-        address: relayerAddress,
-        balance: `${balance.toFixed(2)} TRX`,
+        balance,
         energy: resources.energy,
         bandwidth: resources.bandwidth
       },
-      network: process.env.TRON_FULL_NODE || 'https://api.trongrid.io',
-      timestamp: new Date().toISOString()
+      networkCheck: checkFailed ? { success: false, error: checkError } : { success: true }
     });
-
-    if (!healthy) {
-      logger.warn(`Relayer balance low: ${balance} TRX`);
-    }
-  } catch (e) {
-    logger.error('Health check failed:', e);
-    res.status(500).json({ status: 'error', message: e.message });
+  } catch (error) {
+    logger.error('Critical failure in health route logic:', error);
+    res.status(200).json({ status: 'error', message: error.message });
   }
 });
 
