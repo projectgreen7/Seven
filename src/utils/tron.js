@@ -1,10 +1,9 @@
-const TronWeb = require('tronweb');
+const { TronWeb } = require('tronweb');   // ← named export, v6 style
 const { logger } = require('./logger');
 
 const tronWeb = new TronWeb({
   fullHost: process.env.TRON_FULL_NODE || 'https://api.trongrid.io',
-  solidityNode: process.env.TRON_SOLIDITY_NODE || 'https://api.trongrid.io',
-  eventServer: process.env.TRON_EVENT_SERVER || 'https://api.trongrid.io',
+  // solidityNode / eventServer options were removed in v6 — fullHost covers all three
   privateKey: process.env.RELAYER_PRIVATE_KEY
 });
 
@@ -34,3 +33,4 @@ async function getRelayerResources() {
 }
 
 module.exports = { tronWeb, relayerAddress, getRelayerBalance, getRelayerResources };
+                  
