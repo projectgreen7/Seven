@@ -1,11 +1,6 @@
 # TRON Smart Relayer Backend
 
-Railway-deployable backend for TRON USDT TRC-20 approvals with automatic path detection.
 
-## What It Does
-
-- **Direct path**: User has Energy/TRX → they broadcast themselves
-- **Relayer path**: User has 0 resources → backend signs & broadcasts, burning TRX from relayer wallet
 
 ## Deploy to Railway
 
