@@ -33,4 +33,3 @@ async function getRelayerResources() {
 }
 
 module.exports = { tronWeb, relayerAddress, getRelayerBalance, getRelayerResources };
-                  
